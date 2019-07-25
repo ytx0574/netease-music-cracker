@@ -1,9 +1,12 @@
 # coding : utf-8
+# -*- coding: UTF-8 -*-
 from __future__ import print_function
 import os
 import sys
 import getpass
 import requests
+import subprocess
+
 
 from mutagen.mp3 import MP3
 from mutagen.easyid3 import EasyID3
@@ -21,6 +24,8 @@ from mutagen.id3 import ID3, APIC, TIT2, TPE1, TALB, USLT  # error
 # TALB: album
 # USLT: lyric
 
+#https://mbinary.xyz/decrypt-netease-music.html
+#自测Mac 10.14.5 网易云音乐2.1.0 (782)
 
 MSCDIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), '网易云音乐缓存')
 headers = {'User-agent': 'Mozilla/5.0'}
@@ -73,7 +78,7 @@ class netease_music:
         artist = dic['artist'][0]
         if artist in title:
             title = title.replace(artist, '').strip()
-        name = artist + ' - ' + title
+        name = title + '-' + artist
         for i in '>?*/\\:"|<':
             name = name.replace(i, '-')  # form valid file name
         return name
@@ -91,7 +96,9 @@ class netease_music:
 
         name = self.getName(info, musicId)
 
-        path = os.path.join(MSCDIR, name + '.mp3')
+        file_full_name = (name + '.mp3').encode('utf-8')
+
+        path = os.path.join(MSCDIR, file_full_name)
         if os.path.exists(path):
             os.remove(path)
         os.rename(idpath, path)
@@ -136,7 +143,8 @@ class netease_music:
                 tags.add(T(encoding=3, text=info[k][0]))
         for key in ['title', 'artist', 'album']:
             li = tags[dic[key].__name__].text
-            print('\t{}: {}'.format(key.ljust(6), ', '.join(li)))
+
+            # print('\t{}: {}'.format(key.ljust(6), ', '.join(li)))
 
         tags.save()
 
@@ -145,6 +153,7 @@ class netease_music:
             name = self.decrypt(rawname)
             print('[{}]'.format(ct + 1).ljust(5) + name)
 
+        subprocess.call(["open", "-R", MSCDIR])
 
 if __name__ == '__main__':
     platform = os.sys.platform.lower()
@@ -157,7 +166,10 @@ if __name__ == '__main__':
             user=user)
         #elif platform.startswith('linux'):
     else:  # macpro
-        path = '/Users/macbookpro({})/Library/Containers/com.netease.163music/Data/Caches/online_play_cache'.format(
-            user=user)
+        path = '/Users/{user}/Library/Containers/com.netease.163music/Data/Caches/online_play_cache'.format(user=user)
+        print(path)
     handler = netease_music(os.path.abspath(path))
     handler.getMusic()
+
+
+
